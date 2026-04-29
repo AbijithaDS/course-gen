@@ -14,9 +14,12 @@ app.use(express.json());
 
 // Import Controllers
 const aiController = require('./controllers/aiController');
+const downloadController = require('./controllers/downloadController');
 
 // Routes
 app.post('/api/generate', aiController.generateContent);
+app.post('/api/download/pdf', downloadController.downloadPdf);
+app.post('/api/download/docx', downloadController.downloadDocx);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
