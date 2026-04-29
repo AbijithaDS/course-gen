@@ -5,7 +5,7 @@ import { Calendar, Layers } from 'lucide-react';
 
 const SemesterSelection = () => {
   const navigate = useNavigate();
-  const { department, setYear, setSemester } = useAppContext();
+  const { department, regulation, setYear, setSemester } = useAppContext();
   
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedSemType, setSelectedSemType] = useState(null);
@@ -37,7 +37,7 @@ const SemesterSelection = () => {
             Back
           </button>
           <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-            <span style={{ color: 'var(--primary)' }}>{department.id}</span> &gt; Select Semester
+            <span style={{ color: 'var(--primary)' }}>{department.id}</span> &gt; <span>Reg {regulation}</span> &gt; Select Semester
           </div>
         </div>
       </div>

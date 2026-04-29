@@ -18,6 +18,7 @@ const downloadController = require('./controllers/downloadController');
 
 // Routes
 app.post('/api/generate', aiController.generateContent);
+app.get('/api/files', aiController.getFiles);
 app.post('/api/download/pdf', downloadController.downloadPdf);
 app.post('/api/download/docx', downloadController.downloadDocx);
 

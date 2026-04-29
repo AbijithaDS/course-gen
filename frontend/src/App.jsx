@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Welcome from './pages/Welcome';
 import DepartmentSelection from './pages/DepartmentSelection';
+import RegulationSelection from './pages/RegulationSelection';
 import SemesterSelection from './pages/SemesterSelection';
 import SubjectSelection from './pages/SubjectSelection';
 import CourseContent from './pages/CourseContent';
@@ -17,6 +18,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Welcome />} />
               <Route path="/departments" element={<DepartmentSelection />} />
+              <Route path="/regulation" element={<RegulationSelection />} />
               <Route path="/semester" element={<SemesterSelection />} />
               <Route path="/subjects" element={<SubjectSelection />} />
               <Route path="/course-content" element={<CourseContent />} />

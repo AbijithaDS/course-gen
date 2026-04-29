@@ -1,20 +1,59 @@
 const { GoogleGenAI } = require('@google/genai');
+const { createClient } = require('@supabase/supabase-js');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 exports.generateContent = async (req, res) => {
   try {
-    const { department, semester, subject, type } = req.body;
+    const { department, regulation, year, semester, subject, type } = req.body;
 
     if (!department || !semester || !subject || !type) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check for existing content in Supabase first
+    let query = supabase
+      .from('generated_content')
+      .select('content')
+      .eq('department', department)
+      .eq('regulation', regulation || 'N/A')
+      .eq('year', year || 0)
+      .eq('semester', semester)
+      .eq('type', type);
+
+    // For static types (vision, mission, etc.), we can have global versions
+    const staticTypes = ['vision', 'mission', 'po', 'pso', 'peo', 'course_file'];
+    if (staticTypes.includes(type)) {
+      query = query.or(`subject.eq.${subject},subject.eq.GLOBAL`);
+    } else {
+      query = query.eq('subject', subject);
+    }
+
+    const { data: existingContent, error: fetchError } = await query.single();
+
+    if (existingContent) {
+      console.log(`Found existing ${type} content for ${subject} in Supabase`);
+      return res.status(200).json({
+        success: true,
+        generatedText: existingContent.content,
+        source: 'database'
+      });
+    }
+
+    if (req.body.dryRun) {
+      return res.status(200).json({
+        success: false,
+        message: 'Content not found in database (dry run)',
+        source: 'none'
+      });
     }
 
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
     }
 
-    console.log(`Generating ${type} content for ${subject} (${department}, Sem ${semester})`);
+    console.log(`Generating new ${type} content for ${subject} (${department}, Sem ${semester})`);
 
     // Define prompts based on type
     let promptInstruction = '';
@@ -50,6 +89,7 @@ exports.generateContent = async (req, res) => {
     Subject: ${subject}
     Department: ${department} Engineering
     Semester: ${semester}
+    Regulation: ${regulation || 'N/A'}
     
     Task: ${promptInstruction}
     
@@ -63,9 +103,29 @@ exports.generateContent = async (req, res) => {
 
     const generatedText = response.text;
 
+    // Save to Supabase
+    const { error: insertError } = await supabase
+      .from('generated_content')
+      .insert([
+        {
+          department,
+          regulation: regulation || 'N/A',
+          year: year || 0,
+          semester,
+          subject,
+          type,
+          content: generatedText
+        }
+      ]);
+
+    if (insertError) {
+      console.error('Error saving to Supabase:', insertError);
+    }
+
     res.status(200).json({
       success: true,
-      generatedText
+      generatedText,
+      source: 'ai'
     });
     
   } catch (error) {
@@ -75,5 +135,23 @@ exports.generateContent = async (req, res) => {
       error: 'Failed to generate content', 
       details: error.message 
     });
+  }
+};
+
+exports.getFiles = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('static_files')
+      .select('*');
+
+    if (error) throw error;
+
+    res.status(200).json({
+      success: true,
+      files: data
+    });
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch files' });
   }
 };

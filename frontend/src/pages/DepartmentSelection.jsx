@@ -20,7 +20,7 @@ const DepartmentSelection = () => {
 
   const handleSelect = (dept) => {
     setDepartment(dept);
-    navigate('/semester');
+    navigate('/regulation');
   };
 
   return (

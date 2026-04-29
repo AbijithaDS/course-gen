@@ -5,7 +5,7 @@ import { Book, FileText } from 'lucide-react';
 
 const SubjectSelection = () => {
   const navigate = useNavigate();
-  const { department, year, semester, setSubject } = useAppContext();
+  const { department, regulation, year, semester, setSubject } = useAppContext();
 
   if (!department || !semester) {
     navigate('/departments');
@@ -36,6 +36,8 @@ const SubjectSelection = () => {
           </button>
           <div style={{ fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ color: 'var(--primary)' }}>{department.id}</span>
+            <span>&gt;</span>
+            <span style={{ color: 'var(--primary)' }}>Reg {regulation}</span>
             <span>&gt;</span>
             <span style={{ color: 'var(--primary)' }}>Sem {semester}</span>
             <span>&gt;</span>

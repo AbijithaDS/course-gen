@@ -41,15 +41,102 @@ const CourseContent = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [content, setContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [dbFiles, setDbFiles] = useState([]);
+  const [cachedContent, setCachedContent] = useState({});
 
   useEffect(() => {
-    // If it's a static tab, load static content immediately
-    if (STATIC_CONTENT[activeTab]) {
-      setContent(STATIC_CONTENT[activeTab]);
-    } else {
-      setContent('');
+    const fetchAllData = async () => {
+      try {
+        // Fetch static files
+        const filesResponse = await fetch('http://localhost:5000/api/files');
+        const filesData = await filesResponse.json();
+        if (filesData.success) setDbFiles(filesData.files);
+
+        // Fetch any existing generated content for this subject/context
+        const response = await fetch('http://localhost:5000/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            department: department.id,
+            regulation: regulation,
+            year: year,
+            semester: semester,
+            subject: subject.name,
+            type: 'all' // Backend should handle this to return all types or we fetch on demand
+          })
+        });
+        // Note: Backend doesn't support 'all' yet, so we'll fetch on tab change or just fetch specifically
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      }
+    };
+    fetchAllData();
+  }, [department, regulation, year, semester, subject]);
+
+  useEffect(() => {
+    // Check if we have it in cache first
+    if (cachedContent[activeTab]) {
+      setContent(cachedContent[activeTab]);
+      return;
     }
-  }, [activeTab]);
+
+    // If it's a static tab, check if we have it in the database
+    const loadContent = async () => {
+      if (STATIC_CONTENT[activeTab]) {
+        // Check if we have a PDF extracted text for this static tab
+        try {
+          const response = await fetch('http://localhost:5000/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              department: department.id,
+              regulation: regulation,
+              year: year,
+              semester: semester,
+              subject: subject.name,
+              type: activeTab
+            })
+          });
+          const data = await response.json();
+          if (data.success && data.source === 'database') {
+            setContent(data.generatedText);
+            setCachedContent(prev => ({ ...prev, [activeTab]: data.generatedText }));
+          } else {
+            setContent(STATIC_CONTENT[activeTab]);
+          }
+        } catch (e) {
+          setContent(STATIC_CONTENT[activeTab]);
+        }
+      } else {
+        // AI tab - try to fetch from DB silently
+        try {
+          const response = await fetch('http://localhost:5000/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              department: department.id,
+              regulation: regulation,
+              year: year,
+              semester: semester,
+              subject: subject.name,
+              type: activeTab,
+              dryRun: true // We need a way to check without triggering AI
+            })
+          });
+          const data = await response.json();
+          if (data.success && data.source === 'database') {
+            setContent(data.generatedText);
+            setCachedContent(prev => ({ ...prev, [activeTab]: data.generatedText }));
+          } else {
+            setContent('');
+          }
+        } catch (e) {
+          setContent('');
+        }
+      }
+    };
+    loadContent();
+  }, [activeTab, department, regulation, year, semester, subject, cachedContent]);
 
   if (!subject) {
     navigate('/subjects');
@@ -64,6 +151,8 @@ const CourseContent = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           department: department.id,
+          regulation: regulation,
+          year: year,
           semester: semester,
           subject: subject.name,
           type: activeTab

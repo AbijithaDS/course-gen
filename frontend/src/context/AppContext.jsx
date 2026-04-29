@@ -4,12 +4,14 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [department, setDepartment] = useState(null);
+  const [regulation, setRegulation] = useState(null);
   const [year, setYear] = useState(null);
   const [semester, setSemester] = useState(null);
   const [subject, setSubject] = useState(null);
 
   const resetSelection = () => {
     setDepartment(null);
+    setRegulation(null);
     setYear(null);
     setSemester(null);
     setSubject(null);
@@ -18,6 +20,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       department, setDepartment,
+      regulation, setRegulation,
       year, setYear,
       semester, setSemester,
       subject, setSubject,
