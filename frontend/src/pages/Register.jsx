@@ -73,7 +73,7 @@ const Register = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '85vh' }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: '480px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: 800 }}>Create Account</h2>
           <p style={{ color: 'var(--text-secondary)' }}>Sign up to start managing academic content</p>

@@ -437,41 +437,42 @@ button {
 @media (max-width: 1023px) {
   .course-content-container {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
 
   .course-sidebar {
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.5rem 0.25rem;
+    gap: 0.75rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .course-sidebar::-webkit-scrollbar {
+    display: none;
   }
 
   .course-sidebar button {
-    flex: 1 1 calc(33.333% - 0.5rem);
-    min-width: 140px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-width: auto;
   }
 
   .course-preview-wrapper {
-    max-height: 60vh;
-    min-height: 350px;
+    max-height: 65vh;
+    min-height: 320px;
   }
 }
 
 @media (max-width: 768px) {
   .glass-card {
-    padding: 1.25rem;
-  }
-
-  .course-sidebar button {
-    flex: 1 1 calc(50% - 0.5rem);
+    padding: 1.25rem !important;
   }
 }
 
-@media (max-width: 480px) {
-  .course-sidebar button {
-    flex: 1 1 100%;
-  }
-}
 
 /* Responsive Overhaul Layout Classes */
 
@@ -624,11 +625,20 @@ button {
   .admin-sidebar {
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.5rem 0.25rem;
+    gap: 0.75rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-sidebar::-webkit-scrollbar {
+    display: none;
   }
   .admin-sidebar button {
-    flex: 1 1 calc(33.333% - 0.5rem);
-    min-width: 140px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-width: auto;
   }
   .admin-workspace {
     overflow: visible;
@@ -655,9 +665,6 @@ button {
 }
 
 @media (max-width: 768px) {
-  .admin-sidebar button {
-    flex: 1 1 calc(50% - 0.5rem);
-  }
   .admin-modal-card {
     padding: 1.25rem;
   }
@@ -671,9 +678,7 @@ button {
 }
 
 @media (max-width: 480px) {
-  .admin-sidebar button {
-    flex: 1 1 100%;
-  }
+  /* empty */
 }
 
 /* Course workspace responsive headers */

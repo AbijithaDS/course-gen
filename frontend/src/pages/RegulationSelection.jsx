@@ -61,8 +61,7 @@ const RegulationSelection = () => {
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '1.25rem',
-                transition: 'all 0.2s',
-                padding: '2rem'
+                transition: 'all 0.2s'
               }}
               onClick={() => handleSelect(reg)}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}

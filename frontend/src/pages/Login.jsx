@@ -137,7 +137,7 @@ const Login = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: '450px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: 800 }}>Sign In</h2>
           <p style={{ color: 'var(--text-secondary)' }}>Welcome back to Course File Generator</p>

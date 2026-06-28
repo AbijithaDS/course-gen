@@ -30,7 +30,7 @@ const Welcome = () => {
 
       {user && user.role !== 'SYSTEM_OWNER' ? (
         /* --- 1. LOGGED IN SESSION SHORTCUT --- */
-        <div className="glass-card" style={{ width: '100%', maxWidth: '500px', padding: '2rem', marginTop: '1rem' }}>
+        <div className="glass-card" style={{ width: '100%', maxWidth: '500px', marginTop: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: 'var(--primary)' }}>
             <UserCheck size={40} />
           </div>
@@ -79,7 +79,7 @@ const Welcome = () => {
             {/* Faculty Portal Option */}
             <div 
               className="glass-card"
-              style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '2.5rem', textAlign: 'center' }}
+              style={{ cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
               onClick={() => handleRoleSelection('Faculty')}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -98,7 +98,7 @@ const Welcome = () => {
             {/* Admin Portal Option */}
             <div 
               className="glass-card"
-              style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '2.5rem', textAlign: 'center' }}
+              style={{ cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
               onClick={() => handleRoleSelection('Admin')}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
