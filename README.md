@@ -179,9 +179,7 @@ GROQ_API_KEY=your_groq_api_key_here
 # Optional — Google Sign-In
 GOOGLE_CLIENT_ID=your_google_client_id_here
 
-# Optional — System owner credentials (SHA-256 hashes)
-SYSTEM_OWNER_EMAIL_HASH=your_hash_here
-SYSTEM_OWNER_PASSWORD_HASH=your_hash_here
+
 ```
 
 Start the backend server:
