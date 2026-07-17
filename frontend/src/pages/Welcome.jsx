@@ -6,7 +6,7 @@ import { BookOpen, Shield, GraduationCap, ArrowRight, UserCheck, ArrowLeft } fro
 const Welcome = () => {
   const navigate = useNavigate();
   const { user, logoutUser } = useAppContext();
-  
+
   // Controls transition between original landing and the Role Selection gateway
   const [showRoleSelect, setShowRoleSelect] = useState(false);
 
@@ -16,14 +16,14 @@ const Welcome = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '85vh', textAlign: 'center' }}>
-      
+
       {/* Brand Header Icon */}
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'center' }}>
         <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '1.5rem', boxShadow: 'var(--shadow-md)', display: 'inline-flex' }}>
           <BookOpen size={64} color="var(--primary)" strokeWidth={1.5} />
         </div>
       </div>
-      
+
       <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3.25rem)', marginBottom: '1rem', letterSpacing: '-0.025em', fontWeight: 800 }}>
         Course File Generator
       </h1>
@@ -39,13 +39,13 @@ const Welcome = () => {
             Logged in as <span className="badge">{user.role}</span>
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => (user.role === 'Admin' || user.role === 'SYSTEM_OWNER') ? navigate('/admin') : navigate('/departments')}
             >
               Go to Workspace <ArrowRight size={18} />
             </button>
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={logoutUser}
             >
@@ -59,9 +59,9 @@ const Welcome = () => {
           <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '600px', marginBottom: '3rem', lineHeight: '1.8' }}>
             Automate the creation of academic course materials. Generate syllabi, question banks, and internal exams with a clean, professional workflow.
           </p>
-          
-          <button 
-            className="btn btn-primary" 
+
+          <button
+            className="btn btn-primary"
             onClick={() => setShowRoleSelect(true)}
             style={{ fontSize: '1.125rem', padding: '1rem 2.75rem' }}
           >
@@ -74,10 +74,10 @@ const Welcome = () => {
           <h3 style={{ fontSize: '1.5rem', marginBottom: '2rem', color: 'var(--text-primary)', fontWeight: 700 }}>
             Are you a Faculty member or System Administrator?
           </h3>
-          
+
           <div className="welcome-role-grid">
             {/* Faculty Portal Option */}
-            <div 
+            <div
               className="glass-card"
               style={{ cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
               onClick={() => handleRoleSelection('Faculty')}
@@ -96,7 +96,7 @@ const Welcome = () => {
             </div>
 
             {/* Admin Portal Option */}
-            <div 
+            <div
               className="glass-card"
               style={{ cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
               onClick={() => handleRoleSelection('Admin')}
@@ -115,8 +115,8 @@ const Welcome = () => {
             </div>
           </div>
 
-          <button 
-            className="btn btn-secondary" 
+          <button
+            className="btn btn-secondary"
             onClick={() => setShowRoleSelect(false)}
             style={{ fontSize: '0.9rem', padding: '0.5rem 1.25rem' }}
           >

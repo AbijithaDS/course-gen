@@ -11,7 +11,8 @@ const TEMPLATE_MAP = {
   // fallback placeholders for other formats
   hots: 'Hots.docx',
   assignment: 'Assignment.docx',
-  beyond: 'Content Beyond The Syllabus - format.docx' 
+  beyond: 'Content Beyond The Syllabus - format.docx',
+  labmanual: 'lab_manual_template.docx'
 };
 
 /**

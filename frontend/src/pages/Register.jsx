@@ -13,14 +13,14 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('Faculty');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!username || !password || !confirmPassword || !role) {
       setError('Please fill in all fields');
       return;
@@ -46,7 +46,7 @@ const Register = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role })
       });
-      
+
       const data = await res.json();
 
       if (res.ok && data.success) {
@@ -80,14 +80,14 @@ const Register = () => {
         </div>
 
         {error && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            backgroundColor: '#fee2e2', 
-            color: '#b91c1c', 
-            padding: '0.75rem 1rem', 
-            borderRadius: 'var(--radius-sm)', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#fee2e2',
+            color: '#b91c1c',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '1.5rem',
             fontSize: '0.875rem'
           }}>
@@ -97,14 +97,14 @@ const Register = () => {
         )}
 
         {success && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            backgroundColor: '#d1fae5', 
-            color: '#065f46', 
-            padding: '0.75rem 1rem', 
-            borderRadius: 'var(--radius-sm)', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#d1fae5',
+            color: '#065f46',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '1.5rem',
             fontSize: '0.875rem'
           }}>
@@ -118,10 +118,10 @@ const Register = () => {
             <label className="label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <User size={16} /> Username
             </label>
-            <input 
-              type="text" 
-              className="input-field" 
-              placeholder="Pick a username" 
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Pick a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
@@ -133,7 +133,7 @@ const Register = () => {
               <Shield size={16} /> Register As
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-              <button 
+              <button
                 type="button"
                 className={`btn ${role === 'Faculty' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setRole('Faculty')}
@@ -142,7 +142,7 @@ const Register = () => {
               >
                 Faculty
               </button>
-              <button 
+              <button
                 type="button"
                 className={`btn ${role === 'Admin' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setRole('Admin')}
@@ -159,10 +159,10 @@ const Register = () => {
               <Lock size={16} /> Password
             </label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                className="input-field" 
-                placeholder="Minimum 6 characters" 
+              <input
+                type={showPassword ? "text" : "password"}
+                className="input-field"
+                placeholder="Minimum 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -194,10 +194,10 @@ const Register = () => {
               <Lock size={16} /> Confirm Password
             </label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                className="input-field" 
-                placeholder="Re-enter password" 
+              <input
+                type={showPassword ? "text" : "password"}
+                className="input-field"
+                placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isLoading}
@@ -224,9 +224,9 @@ const Register = () => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }}
             disabled={isLoading}
           >

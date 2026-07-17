@@ -28,6 +28,7 @@ const documentGenerator = require('./services/documentGenerator');
 
 // AI Generation Route
 app.post('/api/generate', aiController.generateContent);
+app.post('/api/generate-lab-manual', aiController.generateLabManual);
 
 // Auth Routes
 app.post('/api/auth/register', authController.register);

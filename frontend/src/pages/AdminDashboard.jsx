@@ -48,6 +48,7 @@ const AdminDashboard = () => {
   const [newSubjName, setNewSubjName] = useState('');
   const [newSubjDept, setNewSubjDept] = useState('');
   const [newSubjSem, setNewSubjSem] = useState(1);
+  const [newSubjType, setNewSubjType] = useState('theory');
   
   // Search & view modal states
   const [searchTerm, setSearchTerm] = useState('');
@@ -254,7 +255,9 @@ const AdminDashboard = () => {
           code: newSubjCode,
           name: newSubjName,
           departmentId: newSubjDept,
-          semester: newSubjSem
+          semester: newSubjSem,
+          isLab: newSubjType === 'lab' || newSubjType === 'combined',
+          subjectType: newSubjType
         })
       });
       const data = await res.json();
@@ -262,6 +265,7 @@ const AdminDashboard = () => {
         setSuccessMsg('Subject added successfully!');
         setNewSubjCode('');
         setNewSubjName('');
+        setNewSubjType('theory');
         fetchSubjects();
       } else {
         setErrorMsg(data.error || 'Failed to add subject');
@@ -334,6 +338,9 @@ const AdminDashboard = () => {
       case 'hots': return 'HOTS';
       case 'assignment': return 'Assignment';
       case 'beyond': return 'Beyond Syllabus';
+      case 'labmanual': return 'Lab Manual';
+      case 'coursefile': return 'Course File';
+      case 'syllabus': return 'Subject Syllabus';
       default: return id.toUpperCase();
     }
   };
@@ -732,46 +739,161 @@ const AdminDashboard = () => {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="label" style={{ marginBottom: '0.25rem' }}>Subject Type</label>
+                    <select
+                      className="input-field"
+                      style={{ padding: '0.6rem 0.8rem', fontSize: '0.9rem' }}
+                      value={newSubjType}
+                      onChange={(e) => setNewSubjType(e.target.value)}
+                    >
+                      <option value="theory">Theory</option>
+                      <option value="lab">Laboratory</option>
+                      <option value="combined">Theory + Laboratory (Combined)</option>
+                    </select>
+                  </div>
                   <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.6rem 1rem', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     <Plus size={16} /> Add Subject
                   </button>
                 </form>
 
-                {/* List Table */}
-                <div className="dashboard-scroll-content">
+                {/* List Tables */}
+                <div className="dashboard-scroll-content" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   {loadingSubjs ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}><RefreshCw size={32} className="spinner" /></div>
                   ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid var(--border-light)', color: 'var(--text-secondary)' }}>
-                          <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Code</th>
-                          <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Subject Name</th>
-                          <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Dept</th>
-                          <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Sem</th>
-                          <th style={{ padding: '0.75rem 1rem', fontWeight: 600, textAlign: 'center' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subjects.map(subj => (
-                          <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                            <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--primary)' }}>{subj.code}</td>
-                            <td style={{ padding: '1rem' }}>{subj.name}</td>
-                            <td style={{ padding: '1rem' }}><span className="badge">{subj.departmentId}</span></td>
-                            <td style={{ padding: '1rem' }}>Sem {subj.semester}</td>
-                            <td style={{ padding: '1rem', textAlign: 'center' }}>
-                              <button 
-                                className="btn-icon" 
-                                onClick={() => handleDeleteSubject(subj.id)}
-                                style={{ color: '#b91c1c', borderColor: '#fee2e2' }}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <>
+                      {/* Theory Subjects Table */}
+                      <div>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                          <Book size={18} /> Theory Subjects ({subjects.filter(s => s.subjectType === 'theory' || (!s.subjectType && !s.isLab)).length})
+                        </h4>
+                        {subjects.filter(s => s.subjectType === 'theory' || (!s.subjectType && !s.isLab)).length === 0 ? (
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '0.5rem' }}>No theory subjects configured.</p>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '1rem' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '2px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '20%' }}>Code</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '50%' }}>Subject Name</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '15%' }}>Dept</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '10%' }}>Sem</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, textAlign: 'center', width: '5%' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {subjects.filter(s => s.subjectType === 'theory' || (!s.subjectType && !s.isLab)).map(subj => (
+                                <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--primary)' }}>{subj.code}</td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>{subj.name}</td>
+                                  <td style={{ padding: '0.75rem 1rem' }}><span className="badge">{subj.departmentId}</span></td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>Sem {subj.semester}</td>
+                                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                                    <button 
+                                      className="btn-icon" 
+                                      onClick={() => handleDeleteSubject(subj.id)}
+                                      style={{ color: '#b91c1c', borderColor: '#fee2e2' }}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+
+                      {/* Laboratory Subjects Table */}
+                      <div>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669' }}>
+                          <FileText size={18} /> Laboratory Subjects ({subjects.filter(s => s.subjectType === 'lab' || (s.isLab && s.subjectType !== 'combined')).length})
+                        </h4>
+                        {subjects.filter(s => s.subjectType === 'lab' || (s.isLab && s.subjectType !== 'combined')).length === 0 ? (
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '0.5rem' }}>No laboratory subjects configured.</p>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '2px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '20%' }}>Code</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '50%' }}>Subject Name</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '15%' }}>Dept</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '10%' }}>Sem</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, textAlign: 'center', width: '5%' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {subjects.filter(s => s.subjectType === 'lab' || (s.isLab && s.subjectType !== 'combined')).map(subj => (
+                                <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--primary)' }}>{subj.code}</td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>
+                                    {subj.name}
+                                    <span className="badge" style={{ marginLeft: '0.5rem', backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                                      LAB
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '0.75rem 1rem' }}><span className="badge">{subj.departmentId}</span></td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>Sem {subj.semester}</td>
+                                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                                    <button 
+                                      className="btn-icon" 
+                                      onClick={() => handleDeleteSubject(subj.id)}
+                                      style={{ color: '#b91c1c', borderColor: '#fee2e2' }}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+
+                      {/* Combined Subjects Table */}
+                      {subjects.filter(s => s.subjectType === 'combined').length > 0 && (
+                        <div>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#7c3aed' }}>
+                            <Layers size={18} /> Theory + Laboratory Subjects ({subjects.filter(s => s.subjectType === 'combined').length})
+                          </h4>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '2px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '20%' }}>Code</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '50%' }}>Subject Name</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '15%' }}>Dept</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, width: '10%' }}>Sem</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600, textAlign: 'center', width: '5%' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {subjects.filter(s => s.subjectType === 'combined').map(subj => (
+                                <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--primary)' }}>{subj.code}</td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>
+                                    {subj.name}
+                                    <span className="badge" style={{ marginLeft: '0.5rem', backgroundColor: '#f3e8ff', color: '#7c3aed', border: '1px solid #ddd6fe' }}>
+                                      THEORY+LAB
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '0.75rem 1rem' }}><span className="badge">{subj.departmentId}</span></td>
+                                  <td style={{ padding: '0.75rem 1rem' }}>Sem {subj.semester}</td>
+                                  <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                                    <button 
+                                      className="btn-icon" 
+                                      onClick={() => handleDeleteSubject(subj.id)}
+                                      style={{ color: '#b91c1c', borderColor: '#fee2e2' }}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -833,6 +955,9 @@ const AdminDashboard = () => {
                   <option value="assignment">Assignment</option>
                   <option value="hots">HOTS</option>
                   <option value="beyond">Beyond Syllabus</option>
+                  <option value="labmanual">Lab Manual</option>
+                  <option value="coursefile">Course File</option>
+                  <option value="syllabus">Subject Syllabus</option>
                 </select>
 
                 {/* Department Filter */}

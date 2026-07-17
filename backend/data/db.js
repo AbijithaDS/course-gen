@@ -97,20 +97,20 @@ function initializeDatabase() {
   if (subjects.length === 0) {
     const defaultSubjects = [
       // CSE - Semester 1
-      { id: 'CS101', code: 'CS301', name: 'Data Structures and Algorithms', departmentId: 'CSE', semester: 1 },
-      { id: 'CS102', code: 'CS302', name: 'Database Management Systems', departmentId: 'CSE', semester: 1 },
+      { id: 'CS101', code: 'CS301', name: 'Data Structures and Algorithms', departmentId: 'CSE', semester: 1, subjectType: 'theory' },
+      { id: 'CS102', code: 'CS302', name: 'Database Management Systems', departmentId: 'CSE', semester: 1, subjectType: 'theory' },
       // CSE - Semester 2
-      { id: 'CS103', code: 'CS303', name: 'Operating Systems', departmentId: 'CSE', semester: 2 },
-      { id: 'CS104', code: 'CS304', name: 'Computer Networks', departmentId: 'CSE', semester: 2 },
+      { id: 'CS103', code: 'CS303', name: 'Operating Systems', departmentId: 'CSE', semester: 2, subjectType: 'theory' },
+      { id: 'CS104', code: 'CS304', name: 'Computer Networks', departmentId: 'CSE', semester: 2, subjectType: 'theory' },
       // CSE - Semester 3
-      { id: 'CS105', code: 'CS305', name: 'Software Engineering', departmentId: 'CSE', semester: 3 },
-      { id: 'CS106', code: 'CS306', name: 'Artificial Intelligence', departmentId: 'CSE', semester: 3 },
+      { id: 'CS105', code: 'CS305', name: 'Software Engineering', departmentId: 'CSE', semester: 3, subjectType: 'theory' },
+      { id: 'CS106', code: 'CS306', name: 'Artificial Intelligence', departmentId: 'CSE', semester: 3, subjectType: 'theory' },
       // IT - Semester 1
-      { id: 'IT101', code: 'IT301', name: 'Web Programming', departmentId: 'IT', semester: 1 },
-      { id: 'IT102', code: 'IT302', name: 'Cloud Computing Infrastructure', departmentId: 'IT', semester: 1 },
+      { id: 'IT101', code: 'IT301', name: 'Web Programming', departmentId: 'IT', semester: 1, subjectType: 'lab' },
+      { id: 'IT102', code: 'IT302', name: 'Cloud Computing Infrastructure', departmentId: 'IT', semester: 1, subjectType: 'theory' },
       // AI_DS - Semester 1
-      { id: 'AI101', code: 'AD301', name: 'Probability and Data Analytics', departmentId: 'AI_DS', semester: 1 },
-      { id: 'AI102', code: 'AD302', name: 'Machine Learning Fundamentals', departmentId: 'AI_DS', semester: 1 }
+      { id: 'AI101', code: 'AD301', name: 'Probability and Data Analytics', departmentId: 'AI_DS', semester: 1, subjectType: 'theory' },
+      { id: 'AI102', code: 'AD302', name: 'Machine Learning Fundamentals', departmentId: 'AI_DS', semester: 1, subjectType: 'theory' }
     ];
     writeData('subjects', defaultSubjects);
     console.log('Seeded database with default subjects');
@@ -118,11 +118,11 @@ function initializeDatabase() {
 
   // Ensure specific syllabus subjects from the PDF folder are present on system launch
   const requiredSyllabusSubjects = [
-    { id: 'SUB_UIUX', code: '23AD534', name: 'UI - UX Design', departmentId: 'AI_DS', semester: 6 },
-    { id: 'SUB_IOT', code: '23CS412', name: 'Embedded System and IoT', departmentId: 'AI_DS', semester: 6 },
-    { id: 'SUB_SAFETY', code: '23ME601', name: 'Industrial Safety', departmentId: 'AI_DS', semester: 6 },
-    { id: 'SUB_ESDM', code: '23EC602', name: 'Environmental Science and Disaster Management', departmentId: 'AI_DS', semester: 6 },
-    { id: 'SUB_ORGANIC', code: '23AC101', name: 'Organic Farming', departmentId: 'AI_DS', semester: 6 }
+    { id: 'SUB_UIUX', code: '23AD534', name: 'UI - UX Design', departmentId: 'AI_DS', semester: 6, subjectType: 'theory' },
+    { id: 'SUB_IOT', code: '23CS412', name: 'Embedded System and IoT', departmentId: 'AI_DS', semester: 6, subjectType: 'combined' },
+    { id: 'SUB_SAFETY', code: '23ME601', name: 'Industrial Safety', departmentId: 'AI_DS', semester: 6, subjectType: 'theory' },
+    { id: 'SUB_ESDM', code: '23EC602', name: 'Environmental Science and Disaster Management', departmentId: 'AI_DS', semester: 6, subjectType: 'theory' },
+    { id: 'SUB_ORGANIC', code: '23AC101', name: 'Organic Farming', departmentId: 'AI_DS', semester: 6, subjectType: 'theory' }
   ];
 
   let subjectsUpdated = false;
@@ -133,10 +133,16 @@ function initializeDatabase() {
     if (existingIndex !== -1) {
       // Overwrite/Force to AI_DS Semester 6 as these are AIDS Year 3 Even Sem subjects
       const existing = currentSubjects[existingIndex];
-      if (existing.departmentId !== reqSubj.departmentId || existing.semester !== reqSubj.semester || existing.name !== reqSubj.name) {
+      if (
+        existing.departmentId !== reqSubj.departmentId || 
+        existing.semester !== reqSubj.semester || 
+        existing.name !== reqSubj.name ||
+        existing.subjectType !== reqSubj.subjectType
+      ) {
         existing.departmentId = reqSubj.departmentId;
         existing.semester = reqSubj.semester;
         existing.name = reqSubj.name;
+        existing.subjectType = reqSubj.subjectType;
         subjectsUpdated = true;
       }
     } else {

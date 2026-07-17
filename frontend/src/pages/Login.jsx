@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../config';
 const Login = () => {
   const navigate = useNavigate();
   const { loginUser } = useAppContext();
-  
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +18,7 @@ const Login = () => {
   const handleGoogleCallback = async (response) => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       console.log('Posting Google Credential to backend verification endpoint...');
       const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
@@ -26,9 +26,9 @@ const Login = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential })
       });
-      
+
       const data = await res.json();
-      
+
       if (res.ok && data.success) {
         loginUser(data.user);
         console.log('Google login session initialized successfully!');
@@ -48,33 +48,33 @@ const Login = () => {
   // Mount Google branded pill button dynamically on load
   useEffect(() => {
     let active = true;
-    
+
     const initGoogleSignIn = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/config`);
         const data = await res.json();
-        
+
         if (res.ok && data.success && data.googleClientId) {
           if (!active) return;
-          
+
           // Poll for GIS client availability
           const checkGsiAvailable = setInterval(() => {
             if (window.google && window.google.accounts && window.google.accounts.id) {
               clearInterval(checkGsiAvailable);
-              
+
               window.google.accounts.id.initialize({
                 client_id: data.googleClientId,
                 callback: handleGoogleCallback,
                 cancel_on_tap_outside: true
               });
-              
+
               const btnContainer = document.getElementById('google-signin-btn');
               if (btnContainer) {
                 window.google.accounts.id.renderButton(
                   btnContainer,
-                  { 
-                    theme: 'outline', 
-                    size: 'large', 
+                  {
+                    theme: 'outline',
+                    size: 'large',
                     width: Math.max(200, Math.min(370, btnContainer.offsetWidth || 300)),
                     text: 'continue_with',
                     shape: 'pill',
@@ -89,9 +89,9 @@ const Login = () => {
         console.error('Failed to configure Google client credentials:', err);
       }
     };
-    
+
     initGoogleSignIn();
-    
+
     return () => {
       active = false;
     };
@@ -113,7 +113,7 @@ const Login = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      
+
       const data = await res.json();
 
       if (res.ok && data.success) {
@@ -144,14 +144,14 @@ const Login = () => {
         </div>
 
         {error && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            backgroundColor: '#fee2e2', 
-            color: '#b91c1c', 
-            padding: '0.75rem 1rem', 
-            borderRadius: 'var(--radius-sm)', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#fee2e2',
+            color: '#b91c1c',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '1.5rem',
             fontSize: '0.875rem'
           }}>
@@ -165,10 +165,10 @@ const Login = () => {
             <label className="label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <User size={16} /> Username
             </label>
-            <input 
-              type="text" 
-              className="input-field" 
-              placeholder="Enter username" 
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Enter username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
@@ -180,10 +180,10 @@ const Login = () => {
               <Lock size={16} /> Password
             </label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                className="input-field" 
-                placeholder="Enter password" 
+              <input
+                type={showPassword ? "text" : "password"}
+                className="input-field"
+                placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -210,9 +210,9 @@ const Login = () => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }}
             disabled={isLoading}
           >
@@ -235,12 +235,12 @@ const Login = () => {
           Don't have an account? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Register here</Link>
         </div>
 
-        <div style={{ 
-          marginTop: '2rem', 
-          padding: '1rem', 
-          backgroundColor: 'rgba(79, 70, 229, 0.05)', 
-          borderRadius: 'var(--radius-sm)', 
-          fontSize: '0.8rem', 
+        <div style={{
+          marginTop: '2rem',
+          padding: '1rem',
+          backgroundColor: 'rgba(79, 70, 229, 0.05)',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.8rem',
           color: 'var(--text-secondary)',
           lineHeight: '1.5'
         }}>

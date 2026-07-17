@@ -39,7 +39,7 @@ exports.deleteDepartment = (req, res) => {
   const { id } = req.params;
   let departments = db.readData('departments');
   const initialLength = departments.length;
-  
+
   departments = departments.filter(d => d.id !== id);
   if (departments.length === initialLength) {
     return res.status(404).json({ error: 'Department not found' });
@@ -65,7 +65,7 @@ exports.getSubjects = (req, res) => {
 };
 
 exports.addSubject = (req, res) => {
-  const { code, name, departmentId, semester } = req.body;
+  const { code, name, departmentId, semester, isLab, subjectType } = req.body;
   if (!code || !name || !departmentId || !semester) {
     return res.status(400).json({ error: 'Code, name, departmentId, and semester are required' });
   }
@@ -75,12 +75,17 @@ exports.addSubject = (req, res) => {
     return res.status(400).json({ error: 'Subject code already exists' });
   }
 
+  // Derive subjectType: explicit value > isLab checkbox > default "theory"
+  const resolvedType = subjectType || (isLab ? 'lab' : 'theory');
+
   const newSubject = {
     id: 'SUB' + Date.now(),
     code: code.toUpperCase(),
     name,
     departmentId,
-    semester: parseInt(semester, 10)
+    semester: parseInt(semester, 10),
+    isLab: resolvedType === 'lab' || resolvedType === 'combined',
+    subjectType: resolvedType
   };
 
   subjects.push(newSubject);
@@ -130,9 +135,9 @@ exports.addRegulation = (req, res) => {
 const isOwner = (name) => {
   if (!name) return false;
   const lowerName = name.toLowerCase();
-  return lowerName === 'system owner' || 
-         lowerName === 'system_owner' || 
-         db.hashPassword(lowerName) === config.SYSTEM_OWNER_EMAIL_HASH;
+  return lowerName === 'system owner' ||
+    lowerName === 'system_owner' ||
+    db.hashPassword(lowerName) === config.SYSTEM_OWNER_EMAIL_HASH;
 };
 
 // --- GENERATION LOGS & STATS ---
@@ -148,10 +153,10 @@ exports.getStats = (req, res) => {
     const rawGenerations = db.readData('generatedContent');
     const generations = rawGenerations.filter(g => !isOwner(g.generatedBy));
     const departments = db.readData('departments');
-    
+
     // Total generations count
     const totalGenerations = generations.length;
-    
+
     // Breakdown by type
     const typeCounts = {
       cia1: 0,
@@ -160,9 +165,12 @@ exports.getStats = (req, res) => {
       quiz: 0,
       hots: 0,
       assignment: 0,
-      beyond: 0
+      beyond: 0,
+      labmanual: 0,
+      coursefile: 0,
+      syllabus: 0
     };
-    
+
     // Breakdown by department
     const deptCounts = {};
     departments.forEach(d => {
@@ -218,8 +226,8 @@ exports.getUsers = (req, res) => {
   try {
     const users = db.readData('users');
     const sanitizedUsers = users
-      .filter(u => 
-        u.role !== 'SYSTEM_OWNER' && 
+      .filter(u =>
+        u.role !== 'SYSTEM_OWNER' &&
         !isOwner(u.username) &&
         !isOwner(u.email)
       )

@@ -4,97 +4,121 @@
     "code": "CS302",
     "name": "Database Management Systems",
     "departmentId": "CSE",
-    "semester": 1
+    "semester": 1,
+    "subjectType": "theory"
   },
   {
     "id": "CS103",
     "code": "CS303",
     "name": "Operating Systems",
     "departmentId": "CSE",
-    "semester": 2
+    "semester": 2,
+    "subjectType": "theory"
   },
   {
     "id": "CS104",
     "code": "CS304",
     "name": "Computer Networks",
     "departmentId": "CSE",
-    "semester": 2
+    "semester": 2,
+    "subjectType": "theory"
   },
   {
     "id": "CS105",
     "code": "CS305",
     "name": "Software Engineering",
     "departmentId": "CSE",
-    "semester": 3
+    "semester": 3,
+    "subjectType": "theory"
   },
   {
     "id": "CS106",
     "code": "CS306",
     "name": "Artificial Intelligence",
     "departmentId": "CSE",
-    "semester": 3
+    "semester": 3,
+    "subjectType": "theory"
   },
   {
     "id": "IT101",
     "code": "IT301",
     "name": "Web Programming",
     "departmentId": "IT",
-    "semester": 1
+    "semester": 1,
+    "subjectType": "lab"
   },
   {
     "id": "IT102",
     "code": "IT302",
     "name": "Cloud Computing Infrastructure",
     "departmentId": "IT",
-    "semester": 1
+    "semester": 1,
+    "subjectType": "theory"
   },
   {
     "id": "AI101",
     "code": "AD301",
     "name": "Probability and Data Analytics",
     "departmentId": "AI_DS",
-    "semester": 1
+    "semester": 1,
+    "subjectType": "theory"
   },
   {
     "id": "AI102",
     "code": "AD302",
     "name": "Machine Learning Fundamentals",
     "departmentId": "AI_DS",
-    "semester": 1
+    "semester": 1,
+    "subjectType": "theory"
   },
   {
     "id": "SUB_UIUX",
     "code": "23AD534",
     "name": "UI - UX Design",
     "departmentId": "AI_DS",
-    "semester": 6
+    "semester": 6,
+    "subjectType": "theory"
   },
   {
     "id": "SUB_IOT",
     "code": "23CS412",
     "name": "Embedded System and IoT",
     "departmentId": "AI_DS",
-    "semester": 6
+    "semester": 6,
+    "subjectType": "combined",
+    "syllabusFile": "23CS412- Embedded system and IOT.pdf"
   },
   {
     "id": "SUB_SAFETY",
     "code": "23ME601",
     "name": "Industrial Safety",
     "departmentId": "AI_DS",
-    "semester": 6
+    "semester": 6,
+    "subjectType": "theory"
   },
   {
     "id": "SUB_ESDM",
     "code": "23EC602",
     "name": "Environmental Science and Disaster Management",
     "departmentId": "AI_DS",
-    "semester": 6
+    "semester": 6,
+    "subjectType": "theory"
   },
   {
     "id": "SUB_ORGANIC",
     "code": "23AC101",
     "name": "Organic Farming",
     "departmentId": "AI_DS",
-    "semester": 6
+    "semester": 6,
+    "subjectType": "theory"
+  },
+  {
+    "id": "SUB1784202943904",
+    "code": "23CS505",
+    "name": "Devops",
+    "departmentId": "AI_DS",
+    "semester": 6,
+    "isLab": true,
+    "subjectType": "lab"
   }
 ]
