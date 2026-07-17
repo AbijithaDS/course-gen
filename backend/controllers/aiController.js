@@ -430,8 +430,38 @@ Return JSON now:`;
         console.error('[SessionPlan] DB log error:', saveError.message);
       }
 
+      // Pre-generate DOCX and PDF download links
+      try {
+        const docGen = require('../services/documentGenerator');
+        console.log('[SessionPlan] Pre-generating DOCX/PDF downloads...');
+        const preGenResult = await docGen.preGenerateDownloadLinks({
+          subjectCode: sCode,
+          subjectName: sName,
+          departmentId: department,
+          departmentName: targetSubj?.departmentName || '',
+          semester: semester,
+          regulation: regulation,
+          year: academicYear || req.body.academicYear || '2025-26',
+          type: 'sessionplan',
+          content: JSON.stringify(parsedData),
+          collegeName: req.body.collegeName || 'SRI SHANMUGHA COLLEGE OF ENGINEERING AND TECHNOLOGY',
+          facultyName: req.body.facultyName || 'Faculty Member'
+        });
+        parsedData.docxUrl = preGenResult.docxUrl;
+        parsedData.pdfUrl = preGenResult.pdfUrl;
+        parsedData.pdfError = preGenResult.pdfError;
+      } catch (preGenErr) {
+        console.error('[SessionPlan] Pre-generation failed:', preGenErr.message);
+      }
+
       console.log(`[SessionPlan] ══ Complete. Sending HTTP 200 ══\n`);
-      return res.status(200).json(parsedData);
+      return res.status(200).json({
+        success: true,
+        preview: parsedData,
+        docx: parsedData.docxUrl || null,
+        pdf: parsedData.pdfUrl || null,
+        pdfError: parsedData.pdfError || null
+      });
     }
 
     // Check if at least one API key is set
@@ -837,18 +867,51 @@ Return JSON now:`;
       console.error('Failed to log generated content to database:', saveError);
     }
 
-    res.status(200).json({
+    // Pre-generate DOCX and PDF download links
+    let docxUrl = null;
+    let pdfUrl = null;
+    let pdfError = null;
+
+    try {
+      const docGen = require('../services/documentGenerator');
+      console.log(`[DocGen] Pre-generating DOCX/PDF downloads for ${type}...`);
+      const preGenResult = await docGen.preGenerateDownloadLinks({
+        subjectCode: sCode,
+        subjectName: sName,
+        departmentId: department,
+        departmentName: '', // resolved dynamically in generator
+        semester: semester,
+        regulation: regulation,
+        year: year || req.body.academicYear || '2025-26',
+        type: type,
+        content: generatedText,
+        collegeName: req.body.collegeName || 'SRI SHANMUGHA COLLEGE OF ENGINEERING AND TECHNOLOGY',
+        facultyName: req.body.facultyName || 'Faculty Member'
+      });
+      docxUrl = preGenResult.docxUrl;
+      pdfUrl = preGenResult.pdfUrl;
+      pdfError = preGenResult.pdfError;
+    } catch (preGenErr) {
+      console.error(`[DocGen] Pre-generation failed for type ${type}:`, preGenErr.message);
+    }
+
+    return res.status(200).json({
       success: true,
-      generatedText,
-      model: usedModel
+      preview: generatedText,
+      docx: docxUrl,
+      pdf: pdfUrl,
+      pdfError: pdfError
     });
 
   } catch (error) {
     console.error('General server error in generateContent:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: 'Failed to generate content',
-      details: error.message
+      error: {
+        code: 'GENERATION_FAILED',
+        message: 'Unable to generate document. Please try again.',
+        technicalMessage: error.stack || error.message
+      }
     });
   }
 };
@@ -1294,26 +1357,57 @@ Return the JSON now:`;
     console.log('[LabManual] â•‘   PIPELINE COMPLETE â€” HTTP 200 SENT      â•‘');
     console.log('[LabManual] â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n');
 
+    // Pre-generate DOCX and PDF download links
+    let docxUrl = null;
+    let pdfUrl = null;
+    let pdfError = null;
+
+    try {
+      const docGen = require('../services/documentGenerator');
+      console.log('[LabManual] Pre-generating DOCX/PDF downloads...');
+      const preGenResult = await docGen.preGenerateDownloadLinks({
+        subjectCode: subjCode,
+        subjectName: sName,
+        departmentId: department,
+        departmentName: targetSubj?.departmentName || '',
+        semester: semester,
+        regulation: regulation,
+        year: year || '2025-26',
+        type: 'labmanual',
+        content: JSON.stringify({ experiments: validatedExperiments }),
+        collegeName: req.body.collegeName || 'SRI SHANMUGHA COLLEGE OF ENGINEERING AND TECHNOLOGY',
+        facultyName: req.body.facultyName || staffName || 'Faculty Member'
+      });
+      docxUrl = preGenResult.docxUrl;
+      pdfUrl = preGenResult.pdfUrl;
+      pdfError = preGenResult.pdfError;
+    } catch (preGenErr) {
+      console.error('[LabManual] Pre-generation failed:', preGenErr.message);
+    }
+
     return res.status(200).json({
       success: true,
-      experiments: validatedExperiments,
-      totalGenerated: validatedExperiments.length,
-      syllabusUsed: !!syllabusText,
-      model: 'groq/llama-3.3-70b-versatile',
-      agentMode: process.env.GROQ_API_KEY_2 ? 'dual-key-multi-agent' : 'single-key-multi-agent'
+      preview: {
+        experiments: validatedExperiments,
+        totalGenerated: validatedExperiments.length,
+        syllabusUsed: !!syllabusText,
+        model: 'groq/llama-3.3-70b-versatile',
+        agentMode: process.env.GROQ_API_KEY_2 ? 'dual-key-multi-agent' : 'single-key-multi-agent'
+      },
+      docx: docxUrl,
+      pdf: pdfUrl,
+      pdfError: pdfError
     });
 
   } catch (error) {
-    console.error('\n[LabManual] â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—');
-    console.error('[LabManual] â•‘   PIPELINE ERROR                          â•‘');
-    console.error('[LabManual] â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
-    console.error('[LabManual] Error:', error.message);
-    console.error('[LabManual] Stack:', error.stack?.split('\n').slice(0, 4).join('\n'));
+    console.error('[LabManual] Pipeline error:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Lab manual generation encountered an unexpected error.',
-      details: error.message
+      error: {
+        code: 'GENERATION_FAILED',
+        message: 'Unable to generate document. Please try again.',
+        technicalMessage: error.stack || error.message
+      }
     });
   }
 };
-

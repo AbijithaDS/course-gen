@@ -325,6 +325,10 @@ const CourseContent = () => {
     title: '',
     message: ''
   });
+  const [generatedDocxUrl, setGeneratedDocxUrl] = useState(null);
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null);
+  const [generatedPdfError, setGeneratedPdfError] = useState(null);
+  const [generationError, setGenerationError] = useState(null);
 
   // Dynamically apply fixed viewport dashboard layout class
   useEffect(() => {
@@ -466,7 +470,7 @@ const CourseContent = () => {
       
       clearInterval(interval);
 
-      if (data.success && (data.experiments?.length > 0 || data.courseObjectives?.length > 0)) {
+      if (data.success && data.preview && (data.preview.experiments?.length > 0)) {
         setLabManualProgress(prev => {
           if (!prev) return null;
           const completedSteps = prev.steps.map(s => ({ ...s, status: 'done' }));
@@ -477,18 +481,37 @@ const CourseContent = () => {
           };
         });
 
+        setGeneratedDocxUrl(data.docx || null);
+        setGeneratedPdfUrl(data.pdf || null);
+        setGeneratedPdfError(data.pdfError || null);
+        
+        if (data.pdfError) {
+          setGenerationError({
+            message: 'PDF conversion failed. The DOCX was generated successfully. You can still download the DOCX.',
+            technicalMessage: data.pdfError,
+            docxUrl: data.docx
+          });
+        }
+
         setTimeout(() => {
-          setLabManualData(data);
+          setLabManualData(data.preview);
           setShowLabManualSuccess(true);
         }, 600);
       } else {
-        const errMsg = data.error || data.details || 'Lab manual generation failed or returned empty results.';
-        console.error('[LabManual Frontend] Generation failed:', data);
-        setContent(errMsg);
+        const errorDetail = data.error || {};
+        console.error('[LabManual Frontend] Generation failed:', errorDetail.technicalMessage || errorDetail.message || 'Unknown error');
+        setGenerationError({
+          message: errorDetail.message || 'Unable to generate document. Please try again.',
+          technicalMessage: errorDetail.technicalMessage || 'Unknown error'
+        });
         setLabManualProgress(null);
       }
     } catch (err) {
-      setContent(`Error: ${err.message}`);
+      console.error('[LabManual Frontend] Fetch exception:', err);
+      setGenerationError({
+        message: 'Unable to generate document. Please try again.',
+        technicalMessage: err.stack || err.message
+      });
       setLabManualProgress(null);
       clearInterval(interval);
     } finally {
@@ -522,14 +545,33 @@ const CourseContent = () => {
       });
 
       const data = await response.json();
-      if (response.ok && data.success) {
-        setSessionPlanData(data);
+      if (response.ok && data.success && data.preview && data.preview.sessions?.length > 0) {
+        setGeneratedDocxUrl(data.docx || null);
+        setGeneratedPdfUrl(data.pdf || null);
+        setGeneratedPdfError(data.pdfError || null);
+        setSessionPlanData(data.preview);
+
+        if (data.pdfError) {
+          setGenerationError({
+            message: 'PDF conversion failed. The DOCX was generated successfully. You can still download the DOCX.',
+            technicalMessage: data.pdfError,
+            docxUrl: data.docx
+          });
+        }
       } else {
-        alert(data.error || 'Failed to generate session plan.');
+        const errorDetail = data.error || {};
+        console.error('[SessionPlan Frontend] Generation failed:', errorDetail.technicalMessage || errorDetail.message || 'Unknown error');
+        setGenerationError({
+          message: errorDetail.message || 'Unable to generate document. Please try again.',
+          technicalMessage: errorDetail.technicalMessage || 'Unknown error'
+        });
       }
     } catch (err) {
-      console.error(err);
-      alert('Error connecting to the server.');
+      console.error('[SessionPlan Frontend] Fetch exception:', err);
+      setGenerationError({
+        message: 'Unable to generate document. Please try again.',
+        technicalMessage: err.stack || err.message
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -585,15 +627,33 @@ const CourseContent = () => {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        setContent(data.generatedText);
+      if (response.ok && data.success && data.preview && data.preview.trim().length > 0) {
+        setGeneratedDocxUrl(data.docx || null);
+        setGeneratedPdfUrl(data.pdf || null);
+        setGeneratedPdfError(data.pdfError || null);
+        setContent(data.preview);
+
+        if (data.pdfError) {
+          setGenerationError({
+            message: 'PDF conversion failed. The DOCX was generated successfully. You can still download the DOCX.',
+            technicalMessage: data.pdfError,
+            docxUrl: data.docx
+          });
+        }
       } else {
-        setContent(`Error: ${data.error || 'Failed to generate content'}`);
-        console.error('Generation error:', data);
+        const errorDetail = data.error || {};
+        console.error('[DocGen Frontend] Generation failed:', errorDetail.technicalMessage || errorDetail.message || 'Unknown error');
+        setGenerationError({
+          message: errorDetail.message || 'Unable to generate document. Please try again.',
+          technicalMessage: errorDetail.technicalMessage || 'Unknown error'
+        });
       }
     } catch (error) {
-      console.error("Error generating content", error);
-      setContent('Error: Could not connect to the generation server. Is the backend running?');
+      console.error("[DocGen Frontend] Fetch exception:", error);
+      setGenerationError({
+        message: 'Unable to generate document. Please try again.',
+        technicalMessage: error.stack || error.message
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -818,8 +878,79 @@ const CourseContent = () => {
     return m ? `${m[1]}-${m[2]}` : reg;
   };
 
+  // Dynamic PDF Export using high-fidelity MS Word COM conversion engine
+  const handleExportPDF = async () => {
+    try {
+      console.log('Requesting high-fidelity PDF from backend...');
+      setIsGenerating(true); // show loader during conversion
+      
+      const payload = {
+        subjectCode: activeTab === 'labmanual' ? editableFields.courseCode : subject.code,
+        subjectName: activeTab === 'labmanual' ? editableFields.courseName : subject.name,
+        departmentId: department.id,
+        departmentName: activeTab === 'labmanual' ? editableFields.department : department.name,
+        semester: activeTab === 'labmanual' ? editableFields.semester : semester,
+        regulation: activeTab === 'labmanual' ? editableFields.regulation : regulation,
+        year: activeTab === 'labmanual' ? editableFields.academicYear : year,
+        collegeName: activeTab === 'labmanual' ? editableFields.collegeName : undefined,
+        facultyName: activeTab === 'labmanual' ? editableFields.facultyName : undefined,
+        type: activeTab,
+        format: 'pdf', // Enforce high-fidelity PDF conversion
+        content: activeTab === 'labmanual' ? JSON.stringify(labManualData) : activeTab === 'sessionplan' ? JSON.stringify(sessionPlanData) : content
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.details || errJson.error || 'Failed to generate high-fidelity PDF.');
+      }
+
+      // Fetch as binary blob
+      const blob = await response.blob();
+      const filename = `${subject.code}_${activeTab.toUpperCase()}_Formatted.pdf`;
+
+      // Trigger standard browser download of binary file
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      console.log('PDF document downloaded successfully:', filename);
+
+    } catch (error) {
+      console.error('Error exporting high-fidelity PDF:', error);
+      setAlertModal({
+        isOpen: true,
+        title: 'PDF Generation Failed',
+        message: `PDF generation failed. Show the conversion error: ${error.message}`
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setGenerationError(null);
+    setGeneratedDocxUrl(null);
+    setGeneratedPdfUrl(null);
+    setGeneratedPdfError(null);
+    if (activeTab === 'labmanual') {
+      handleGenerateLabManual();
+    } else if (activeTab === 'sessionplan') {
+      setShowSessionPlanForm(true);
+    } else {
+      handleGenerate();
+    }
+  };
+
   // PDF Export using native print optimization window
-  const handleExportPDF = () => {
+  const handleExportPDFLegacy = () => {
     const isCIA = (activeTab === 'cia1' || activeTab === 'cia2');
     const printWindow = window.open('', '_blank');
     const docTitle = `${subject.code}_${activeTab.toUpperCase()}_CourseFile`;
@@ -2177,11 +2308,20 @@ const CourseContent = () => {
                           className="download-dropdown-item"
                           role="menuitem"
                           onClick={() => {
-                            handleExportPDF();
+                            if (generatedPdfError) {
+                              setAlertModal({
+                                isOpen: true,
+                                title: 'PDF Generation Failed',
+                                message: `PDF generation failed. Show the conversion error: ${generatedPdfError}`
+                              });
+                            } else {
+                              handleExportPDF();
+                            }
                             setIsDownloadDropdownOpen(false);
                           }}
+                          style={generatedPdfError ? { color: '#ef4444', textDecoration: 'line-through', cursor: 'not-allowed' } : {}}
                         >
-                          <span>📄</span> Download as PDF
+                          <span>📄</span> Download as PDF {generatedPdfError && ' (Failed)'}
                         </button>
                         <button
                           className="download-dropdown-item"
@@ -2264,7 +2404,66 @@ const CourseContent = () => {
           </div>
 
           <div className="course-preview-wrapper">
-            {!content && !isGenerating ? (
+            {generationError ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                <div className="glass-card animate-fade-in" style={{
+                  maxWidth: '520px',
+                  width: '100%',
+                  padding: '3rem 2.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.5rem',
+                  boxShadow: 'var(--shadow-lg)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '3rem' }}>⚠️</div>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#b91c1c', margin: 0 }}>
+                    Unable to Generate {tabs.find(t => t.id === activeTab)?.label || 'Document'}
+                  </h3>
+                  
+                  <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem', textAlign: 'left' }}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                      Reason:
+                    </h4>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                      {generationError.message}
+                    </p>
+                    {generationError.docxUrl && (
+                      <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: '0.375rem', color: '#166534', fontSize: '0.85rem' }}>
+                        The DOCX was generated successfully. You can still download the DOCX.
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    {generationError.docxUrl && (
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = `${API_BASE_URL}${generationError.docxUrl}`;
+                          link.download = `${subject.code}_${activeTab.toUpperCase()}_Formatted.docx`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        style={{ flex: 1, backgroundColor: '#10b981', color: '#fff', border: 'none', height: '44px', fontWeight: 600 }}
+                      >
+                        Download DOCX
+                      </button>
+                    )}
+                    <button 
+                      className="btn btn-primary"
+                      onClick={handleRetry}
+                      style={{ flex: 1, height: '44px', fontWeight: 600 }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : !content && !isGenerating ? (
               activeTab === 'labmanual' ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
                   <div

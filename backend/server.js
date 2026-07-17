@@ -56,15 +56,87 @@ app.get('/api/admin/stats', adminController.getStats);
 app.get('/api/admin/users', adminController.getUsers);
 
 
-// Template Document Export Route
-app.post('/api/export', (req, res) => {
+// File Download Route for Pre-generated documents
+app.get('/api/download/:filename', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'data', 'downloads', filename);
+    
+    if (fs.existsSync(filePath)) {
+      console.log(`[Server] Serving file download: ${filename}`);
+      res.download(filePath);
+    } else {
+      console.warn(`[Server] File not found for download: ${filename}`);
+      res.status(404).send('File not found');
+    }
+  } catch (err) {
+    console.error('[Server] File download error:', err);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// Template Document Export Route (Supports DOCX and dynamic PDF conversion)
+app.post('/api/export', async (req, res) => {
   try {
     const payload = req.body;
     console.log(`Received export request for ${payload.subjectCode} (${payload.type})`);
     
+    const format = payload.format || payload.exportFormat || 'docx';
+    const isPdf = format.toLowerCase() === 'pdf';
+
     const result = documentGenerator.generateDocument(payload);
     
-    // Set appropriate headers based on whether it is fallback HTML-Word (.doc) or real DOCX (.docx)
+    if (isPdf) {
+      const fs = require('fs');
+      const path = require('path');
+      const { convertDocxToPdf } = require('./services/pdfConverter');
+
+      const downloadsDir = path.join(__dirname, 'data', 'downloads');
+      if (!fs.existsSync(downloadsDir)) {
+        fs.mkdirSync(downloadsDir, { recursive: true });
+      }
+
+      const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      const tempDocxPath = path.join(downloadsDir, `temp_exp_${uniqueId}.docx`);
+      const tempPdfPath = tempDocxPath.replace(/\.docx$/i, '.pdf');
+
+      fs.writeFileSync(tempDocxPath, result.buffer);
+
+      try {
+        console.log(`[Server Export] Converting compiled DOCX to PDF...`);
+        const pdfResult = await convertDocxToPdf(tempDocxPath, tempPdfPath);
+        
+        if (pdfResult.success && fs.existsSync(tempPdfPath)) {
+          const pdfBuffer = fs.readFileSync(tempPdfPath);
+          
+          // Clean up temp files
+          try { fs.unlinkSync(tempDocxPath); } catch (_) {}
+          try { fs.unlinkSync(tempPdfPath); } catch (_) {}
+
+          const pdfFilename = result.filename.replace(/\.docx?$/i, '.pdf');
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${pdfFilename}"`);
+          res.setHeader('Content-Length', pdfBuffer.length);
+          return res.status(200).send(pdfBuffer);
+        } else {
+          throw new Error('PDF conversion returned success but file was not found');
+        }
+      } catch (pdfErr) {
+        console.error(`[Server Export] PDF conversion failed:`, pdfErr.message);
+        // Clean up temp files if they exist
+        try { if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath); } catch (_) {}
+        try { if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath); } catch (_) {}
+
+        return res.status(500).json({ 
+          error: 'PDF generation failed.', 
+          details: pdfErr.message 
+        });
+      }
+    }
+
+    // Default Word DOCX flow
     const contentType = result.isFallback 
       ? 'application/msword' 
       : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';

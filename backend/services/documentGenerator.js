@@ -1476,61 +1476,94 @@ function generateDocument(payload) {
           const fs = require('fs');
           const path = require('path');
           const { execFileSync } = require('child_process');
-          
+
           const templatePath = path.resolve(templateService.getTemplatePath(type));
           let scriptName = 'qbankGenerator.py';
-          if (type === 'beyond') {
-            scriptName = 'beyondGenerator.py';
-          } else if (type === 'hots') {
-            scriptName = 'hotsGenerator.py';
-          } else if (type === 'assignment') {
-            scriptName = 'assignmentGenerator.py';
-          } else if (type === 'labmanual') {
-            scriptName = 'labManualGenerator.py';
-          }
+          if (type === 'beyond')      scriptName = 'beyondGenerator.py';
+          else if (type === 'hots')        scriptName = 'hotsGenerator.py';
+          else if (type === 'assignment')  scriptName = 'assignmentGenerator.py';
+          else if (type === 'labmanual')   scriptName = 'labManualGenerator.py';
+
           const scriptPath = path.resolve(path.join(__dirname, scriptName));
-          
-          console.log(`Using high-fidelity Python generator for type ${type} using script ${scriptName}...`);
-          
+          console.log(`[DocGen] Python generator: ${scriptName} | template: ${templatePath}`);
+
+          // Verify template exists before calling Python
+          if (!fs.existsSync(templatePath)) {
+            const errMsg = `Template file not found: ${templatePath}`;
+            console.error(`[DocGen] ${errMsg}`);
+            if (type === 'labmanual') throw new Error(errMsg);
+          }
+          if (!fs.existsSync(scriptPath)) {
+            const errMsg = `Python script not found: ${scriptPath}`;
+            console.error(`[DocGen] ${errMsg}`);
+            if (type === 'labmanual') throw new Error(errMsg);
+          }
+
           const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-          const inputJsonPath = path.resolve(path.join(__dirname, '..', 'data', `qbank_in_${uniqueId}.json`));
-          const outputDocxPath = path.resolve(path.join(__dirname, '..', 'data', `qbank_out_${uniqueId}.docx`));
-          
+          const inputJsonPath  = path.resolve(path.join(__dirname, '..', 'data', `lm_in_${uniqueId}.json`));
+          const outputDocxPath = path.resolve(path.join(__dirname, '..', 'data', `lm_out_${uniqueId}.docx`));
+
+          // Parse content to extract academic year for labmanual
+          let parsedContentYear = year || 'N/A';
+          if (type === 'labmanual' && content) {
+            try {
+              const cc = JSON.parse(content);
+              if (cc.academicYear) parsedContentYear = cc.academicYear;
+            } catch (_) {}
+          }
+
           const payloadData = {
             subjectCode,
             subjectName,
-            staffName: facultyName || staffName,
+            staffName:      facultyName || staffName,
             departmentName: departmentName || displayDept,
-            year: year || 'N/A',
+            year:           parsedContentYear,
             semester,
             regulation,
-            collegeName: collegeName || 'SRI SHANMUGHA COLLEGE OF ENGINEERING AND TECHNOLOGY',
-            facultyName: facultyName || staffName,
+            collegeName:    collegeName || 'SRI SHANMUGHA COLLEGE OF ENGINEERING AND TECHNOLOGY',
+            facultyName:    facultyName || staffName,
             content
           };
-          
+
           fs.writeFileSync(inputJsonPath, JSON.stringify(payloadData, null, 2), 'utf8');
-          
-          console.log(`Running Python script: python "${scriptPath}" "${templatePath}" "${inputJsonPath}" "${outputDocxPath}"`);
-          execFileSync('python', [scriptPath, templatePath, inputJsonPath, outputDocxPath]);
-          
+          console.log(`[DocGen] Input JSON written: ${inputJsonPath}`);
+
+          // Run Python — 120s timeout for lab manual (10 experiments)
+          const TIMEOUT_MS = type === 'labmanual' ? 120000 : 60000;
+          const pyOutput = execFileSync(
+            'python',
+            [scriptPath, templatePath, inputJsonPath, outputDocxPath],
+            { timeout: TIMEOUT_MS, encoding: 'utf8',
+              env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } }
+          );
+
+          // Log Python stdout so we can see progress
+          if (pyOutput) {
+            pyOutput.trim().split('\n').forEach(line => console.log(`[Python] ${line}`));
+          }
+
           if (fs.existsSync(outputDocxPath)) {
             const outputBuffer = fs.readFileSync(outputDocxPath);
-            // clean up output file
             try { fs.unlinkSync(outputDocxPath); } catch (e) {}
-            
-            console.log(`Successfully generated dynamic high-fidelity DOCX via Python: ${docName}.docx`);
+            console.log(`[DocGen] SUCCESS: ${docName}.docx (${outputBuffer.length} bytes)`);
             return {
-              buffer: outputBuffer,
-              filename: `${docName}.docx`,
+              buffer:     outputBuffer,
+              filename:   `${docName}.docx`,
               isFallback: false
             };
           } else {
-            console.warn("Python execution finished but output file not found. Falling back to Docxtemplater...");
+            const errMsg = 'Python finished but output DOCX not found';
+            console.error(`[DocGen] ${errMsg}`);
+            if (type === 'labmanual') throw new Error(errMsg);
+            console.warn('[DocGen] Falling back to Docxtemplater...');
           }
         } catch (pyErr) {
-          console.error(`High-fidelity Python generation failed for type ${type}. Error:`, pyErr.message);
-          console.log("Falling back to standard Docxtemplater rendering...");
+          console.error(`[DocGen] Python generation failed for type ${type}:`, pyErr.message);
+          // For labmanual, NEVER fall back to HTML — return error so frontend shows message
+          if (type === 'labmanual') {
+            throw new Error(`Lab Manual generation failed: ${pyErr.message}`);
+          }
+          console.log('[DocGen] Falling back to standard Docxtemplater rendering...');
         }
       }
 
@@ -1599,7 +1632,69 @@ function generateDocument(payload) {
   }
 }
 
+async function preGenerateDownloadLinks(payload) {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const { convertDocxToPdf } = require('./pdfConverter');
+
+    const result = generateDocument(payload);
+    if (!result || !result.buffer) {
+      throw new Error('Failed to generate DOCX buffer');
+    }
+
+    const downloadsDir = path.resolve(__dirname, '..', 'data', 'downloads');
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+    }
+
+    const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // Strip file extensions if they got appended
+    const baseName = result.filename.replace(/\.docx?$/i, '');
+    const docxFilename = `${baseName}_${uniqueId}.docx`;
+    const pdfFilename = `${baseName}_${uniqueId}.pdf`;
+
+    const docxPath = path.join(downloadsDir, docxFilename);
+    const pdfPath = path.join(downloadsDir, pdfFilename);
+
+    // Save DOCX
+    fs.writeFileSync(docxPath, result.buffer);
+    const docxUrl = `/api/download/${docxFilename}`;
+
+    let pdfUrl = null;
+    let pdfError = null;
+
+    try {
+      console.log(`[DocGen] Pre-generating PDF: ${docxFilename} -> ${pdfFilename}`);
+      const pdfResult = await convertDocxToPdf(docxPath, pdfPath);
+      if (pdfResult.success && fs.existsSync(pdfPath)) {
+        pdfUrl = `/api/download/${pdfFilename}`;
+      } else {
+        throw new Error('PDF conversion returned success but file was not created');
+      }
+    } catch (pdfErr) {
+      console.error(`[DocGen] Pre-generating PDF failed:`, pdfErr.message);
+      pdfError = pdfErr.message;
+    }
+
+    return {
+      docxUrl,
+      pdfUrl,
+      pdfError
+    };
+  } catch (err) {
+    console.error('[DocGen] preGenerateDownloadLinks error:', err.message);
+    return {
+      docxUrl: null,
+      pdfUrl: null,
+      pdfError: err.message
+    };
+  }
+}
+
 module.exports = {
   generateDocument,
+  preGenerateDownloadLinks,
   parseQuestions  // exported for testing
 };
+
