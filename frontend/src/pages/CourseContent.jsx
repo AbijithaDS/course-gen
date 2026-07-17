@@ -907,7 +907,7 @@ const CourseContent = () => {
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.details || errJson.error || 'Failed to generate high-fidelity PDF.');
+        throw new Error(errJson.message || 'PDF Preview unavailable');
       }
 
       // Fetch as binary blob
@@ -927,8 +927,13 @@ const CourseContent = () => {
       console.error('Error exporting high-fidelity PDF:', error);
       setAlertModal({
         isOpen: true,
-        title: 'PDF Generation Failed',
-        message: `PDF generation failed. Show the conversion error: ${error.message}`
+        title: 'PDF Preview Unavailable',
+        message: (
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Unable to generate PDF Preview</p>
+            <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '0.75rem' }}>Download DOCX instead or try again later.</p>
+          </div>
+        )
       });
     } finally {
       setIsGenerating(false);
@@ -2311,8 +2316,13 @@ const CourseContent = () => {
                             if (generatedPdfError) {
                               setAlertModal({
                                 isOpen: true,
-                                title: 'PDF Generation Failed',
-                                message: `PDF generation failed. Show the conversion error: ${generatedPdfError}`
+                                title: 'PDF Preview Unavailable',
+                                message: (
+                                  <div style={{ textAlign: 'left' }}>
+                                    <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Unable to generate PDF Preview</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '0.75rem' }}>Download DOCX instead or try again later.</p>
+                                  </div>
+                                )
                               });
                             } else {
                               handleExportPDF();

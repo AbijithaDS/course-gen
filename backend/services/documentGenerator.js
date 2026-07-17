@@ -1666,15 +1666,18 @@ async function preGenerateDownloadLinks(payload) {
 
     try {
       console.log(`[DocGen] Pre-generating PDF: ${docxFilename} -> ${pdfFilename}`);
-      const pdfResult = await convertDocxToPdf(docxPath, pdfPath);
-      if (pdfResult.success && fs.existsSync(pdfPath)) {
+      const PdfConverter = require('./pdfConverter');
+      const pdfConverter = new PdfConverter();
+      const convertedPath = await pdfConverter.convert(docxPath, pdfPath);
+      
+      if (convertedPath && fs.existsSync(pdfPath)) {
         pdfUrl = `/api/download/${pdfFilename}`;
       } else {
-        throw new Error('PDF conversion returned success but file was not created');
+        pdfError = "PDF Preview unavailable";
       }
     } catch (pdfErr) {
-      console.error(`[DocGen] Pre-generating PDF failed:`, pdfErr.message);
-      pdfError = pdfErr.message;
+      console.error(`[DocGen] Pre-generating PDF failed:`, pdfErr);
+      pdfError = "PDF Preview unavailable";
     }
 
     return {
@@ -1683,11 +1686,11 @@ async function preGenerateDownloadLinks(payload) {
       pdfError
     };
   } catch (err) {
-    console.error('[DocGen] preGenerateDownloadLinks error:', err.message);
+    console.error('[DocGen] preGenerateDownloadLinks error:', err);
     return {
       docxUrl: null,
       pdfUrl: null,
-      pdfError: err.message
+      pdfError: "PDF Preview unavailable"
     };
   }
 }

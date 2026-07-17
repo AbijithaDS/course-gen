@@ -91,7 +91,8 @@ app.post('/api/export', async (req, res) => {
     if (isPdf) {
       const fs = require('fs');
       const path = require('path');
-      const { convertDocxToPdf } = require('./services/pdfConverter');
+      const PdfConverter = require('./services/pdfConverter');
+      const pdfConverter = new PdfConverter();
 
       const downloadsDir = path.join(__dirname, 'data', 'downloads');
       if (!fs.existsSync(downloadsDir)) {
@@ -106,9 +107,9 @@ app.post('/api/export', async (req, res) => {
 
       try {
         console.log(`[Server Export] Converting compiled DOCX to PDF...`);
-        const pdfResult = await convertDocxToPdf(tempDocxPath, tempPdfPath);
+        const convertedPath = await pdfConverter.convert(tempDocxPath, tempPdfPath);
         
-        if (pdfResult.success && fs.existsSync(tempPdfPath)) {
+        if (convertedPath && fs.existsSync(tempPdfPath)) {
           const pdfBuffer = fs.readFileSync(tempPdfPath);
           
           // Clean up temp files
@@ -121,17 +122,17 @@ app.post('/api/export', async (req, res) => {
           res.setHeader('Content-Length', pdfBuffer.length);
           return res.status(200).send(pdfBuffer);
         } else {
-          throw new Error('PDF conversion returned success but file was not found');
+          throw new Error('PDF conversion returned null path');
         }
       } catch (pdfErr) {
-        console.error(`[Server Export] PDF conversion failed:`, pdfErr.message);
+        console.error(`[Server Export] PDF conversion failed:`, pdfErr);
         // Clean up temp files if they exist
         try { if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath); } catch (_) {}
         try { if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath); } catch (_) {}
 
         return res.status(500).json({ 
-          error: 'PDF generation failed.', 
-          details: pdfErr.message 
+          success: false,
+          message: 'PDF Preview unavailable'
         });
       }
     }
